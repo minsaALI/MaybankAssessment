@@ -1,0 +1,4 @@
+aws_region = "us-east-1"
+name_prefix = "assessment"
+key_pair_name = ""
+db_password = "ReplaceWithStrongPassword"

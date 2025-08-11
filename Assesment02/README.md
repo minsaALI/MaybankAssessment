@@ -38,7 +38,7 @@ Notes and best practices
 Applying
 --------
 Run:
-kubectl apply -f <file> -f <file> ...
+kubectl apply -f <file> ...
 
 Example:
 kubectl apply -f 00-namespace.yaml
