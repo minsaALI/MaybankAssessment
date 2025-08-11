@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: assessment-config
+  namespace: assessment
+data:
+  application.properties: |
+    app.name=assessment
+    app.mode=production
+    log.level=INFO

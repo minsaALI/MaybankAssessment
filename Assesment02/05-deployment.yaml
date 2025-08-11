@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: assessment-app
+  namespace: assessment
+  labels:
+    app: assessment-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: assessment-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: assessment-app
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1000
+      containers:
+        - name: assessment-container
+          image: nginx:1.24
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          env:
+            - name: APP_ENV
+              value: production
+            - name: TLS_SECRET_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          envFrom:
+            - configMapRef:
+                name: assessment-config
+          volumeMounts:
+            - name: app-storage
+              mountPath: /var/www/html
+            - name: app-config
+              mountPath: /etc/assessment
+              readOnly: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 5
+      volumes:
+        - name: app-storage
+          persistentVolumeClaim:
+            claimName: assessment-efs-claim
+        - name: app-config
+          configMap:
+            name: assessment-config
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - assessment-app
+              topologyKey: kubernetes.io/hostname
